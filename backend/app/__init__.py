@@ -5,6 +5,7 @@ from .config import Config
 from .extensions import db, migrate
 from .routes.inventory import inventory_bp
 from .routes.orders import orders_bp
+from .routes.purchase_requests import purchase_requests_bp
 from .routes.records import records_bp
 from .routes.suppliers import suppliers_bp
 from .seed import seed_data
@@ -21,6 +22,7 @@ def create_app(config_class=Config):
 
     app.register_blueprint(inventory_bp, url_prefix="/api/inventory")
     app.register_blueprint(orders_bp, url_prefix="/api/orders")
+    app.register_blueprint(purchase_requests_bp, url_prefix="/api/purchase-requests")
     app.register_blueprint(suppliers_bp, url_prefix="/api/suppliers")
     app.register_blueprint(records_bp, url_prefix="/api/records")
 
