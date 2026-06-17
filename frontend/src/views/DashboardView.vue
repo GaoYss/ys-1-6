@@ -71,7 +71,8 @@ const orders = ref([])
 const suppliers = ref([])
 
 const warningItems = computed(() => inventory.value.filter((item) => item.warning))
-const pendingApprovalCount = computed(() => prStore.pendingCount)
+const pendingApprovalCount = computed(() => prStore.pendingCountForCurrentUser)
+const currentUser = computed(() => prStore.currentUser)
 const warningColumns = [
   { key: 'name', label: '原料' },
   { key: 'stock', label: '当前库存' },

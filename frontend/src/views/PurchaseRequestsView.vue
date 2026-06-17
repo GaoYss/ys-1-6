@@ -192,7 +192,10 @@ import StatusBadge from '../components/StatusBadge.vue'
 import { prStore } from '../store/purchaseRequests'
 import { formatDateTime } from '../utils/format'
 
-const currentUser = ref('李店员')
+const currentUser = computed({
+  get: () => prStore.currentUser,
+  set: (val) => prStore.setUser(val)
+})
 const filterStatus = ref('')
 const requests = computed(() => prStore.list)
 const suppliers = ref([])

@@ -5,6 +5,12 @@ import { purchaseRequestsApi } from '../api/purchaseRequests'
 export const prStore = reactive({
   list: [],
   loading: false,
+  currentUser: '李店员',
+  isManager: false,
+  setUser(name) {
+    this.currentUser = name
+    this.isManager = name.includes('店长')
+  },
   async refresh() {
     this.loading = true
     try {
@@ -16,5 +22,10 @@ export const prStore = reactive({
   },
   get pendingCount() {
     return this.list.filter((r) => r.status === 'pending_approval').length
+  },
+  get pendingCountForCurrentUser() {
+    const pending = this.list.filter((r) => r.status === 'pending_approval')
+    if (this.isManager) return pending.length
+    return pending.filter((r) => r.applicant === this.currentUser).length
   }
 })
