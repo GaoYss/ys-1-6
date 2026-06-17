@@ -51,27 +51,27 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { inventoryApi } from '../api/inventory'
 import { ordersApi } from '../api/orders'
-import { purchaseRequestsApi } from '../api/purchaseRequests'
 import { suppliersApi } from '../api/suppliers'
 import DataTable from '../components/DataTable.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatusBadge from '../components/StatusBadge.vue'
+import { prStore } from '../store/purchaseRequests'
 import { statusText } from '../utils/format'
+
+const route = useRoute()
 
 const summary = ref({ ingredientCount: 0, warningCount: 0, totalStock: 0 })
 const inventory = ref([])
 const orders = ref([])
 const suppliers = ref([])
-const purchaseRequests = ref([])
 
 const warningItems = computed(() => inventory.value.filter((item) => item.warning))
-const pendingApprovalCount = computed(
-  () => purchaseRequests.value.filter((r) => r.status === 'pending_approval').length
-)
+const pendingApprovalCount = computed(() => prStore.pendingCount)
 const warningColumns = [
   { key: 'name', label: '原料' },
   { key: 'stock', label: '当前库存' },
@@ -84,18 +84,29 @@ const orderColumns = [
   { key: 'totalAmount', label: '金额' }
 ]
 
-onMounted(async () => {
-  const [summaryRes, inventoryRes, ordersRes, suppliersRes, prRes] = await Promise.all([
+async function loadBaseData() {
+  const [summaryRes, inventoryRes, ordersRes, suppliersRes] = await Promise.all([
     inventoryApi.summary(),
     inventoryApi.list(),
     ordersApi.list(),
-    suppliersApi.list(),
-    purchaseRequestsApi.list()
+    suppliersApi.list()
   ])
   summary.value = summaryRes.data
   inventory.value = inventoryRes.data
   orders.value = ordersRes.data
   suppliers.value = suppliersRes.data
-  purchaseRequests.value = prRes.data
+}
+
+onMounted(async () => {
+  await Promise.all([loadBaseData(), prStore.refresh()])
 })
+
+watch(
+  () => route.fullPath,
+  async (newPath) => {
+    if (newPath === '/' || newPath.startsWith('/?')) {
+      await prStore.refresh()
+    }
+  }
+)
 </script>

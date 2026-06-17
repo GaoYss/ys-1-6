@@ -189,11 +189,12 @@ import { purchaseRequestsApi } from '../api/purchaseRequests'
 import DataTable from '../components/DataTable.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatusBadge from '../components/StatusBadge.vue'
+import { prStore } from '../store/purchaseRequests'
 import { formatDateTime } from '../utils/format'
 
 const currentUser = ref('李店员')
 const filterStatus = ref('')
-const requests = ref([])
+const requests = computed(() => prStore.list)
 const suppliers = ref([])
 const ingredients = ref([])
 const selectedRequest = ref(null)
@@ -302,8 +303,10 @@ function closeForm() {
 async function submitForm() {
   if (!form.supplierId || !form.items.length) return
   try {
+    let targetId = null
     if (isEditing.value) {
-      await purchaseRequestsApi.update(editingId.value, {
+      targetId = editingId.value
+      await purchaseRequestsApi.update(targetId, {
         supplierId: form.supplierId,
         expectedDate: form.expectedDate,
         remark: form.remark,
@@ -313,9 +316,9 @@ async function submitForm() {
           unitPrice: item.unitPrice
         }))
       })
-      await purchaseRequestsApi.submit(editingId.value, currentUser.value)
+      await purchaseRequestsApi.submit(targetId, currentUser.value)
     } else {
-      await purchaseRequestsApi.create({
+      const res = await purchaseRequestsApi.create({
         ...form,
         applicant: currentUser.value,
         items: form.items.map((item) => ({
@@ -324,9 +327,14 @@ async function submitForm() {
           unitPrice: item.unitPrice
         }))
       })
+      targetId = res.data.id
     }
     closeForm()
     await loadList()
+    const refreshed = requests.value.find((r) => r.id === targetId)
+    if (refreshed) {
+      selectedRequest.value = refreshed
+    }
   } catch (err) {
     const msg = err.response?.data?.error || '操作失败'
     alert(msg)
@@ -373,8 +381,7 @@ async function handleApproval() {
 }
 
 async function loadList() {
-  const res = await purchaseRequestsApi.list()
-  requests.value = res.data
+  await prStore.refresh()
   if (selectedRequest.value) {
     const refreshed = requests.value.find((r) => r.id === selectedRequest.value.id)
     if (refreshed) {
