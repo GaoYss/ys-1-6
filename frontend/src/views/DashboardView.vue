@@ -12,6 +12,10 @@
         <strong>{{ summary.warningCount }}</strong>
       </article>
       <article class="metric">
+        <span>待审批申请</span>
+        <strong>{{ pendingApprovalCount }}</strong>
+      </article>
+      <article class="metric">
         <span>供应商</span>
         <strong>{{ suppliers.length }}</strong>
       </article>
@@ -51,6 +55,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import { inventoryApi } from '../api/inventory'
 import { ordersApi } from '../api/orders'
+import { purchaseRequestsApi } from '../api/purchaseRequests'
 import { suppliersApi } from '../api/suppliers'
 import DataTable from '../components/DataTable.vue'
 import PageHeader from '../components/PageHeader.vue'
@@ -61,8 +66,12 @@ const summary = ref({ ingredientCount: 0, warningCount: 0, totalStock: 0 })
 const inventory = ref([])
 const orders = ref([])
 const suppliers = ref([])
+const purchaseRequests = ref([])
 
 const warningItems = computed(() => inventory.value.filter((item) => item.warning))
+const pendingApprovalCount = computed(
+  () => purchaseRequests.value.filter((r) => r.status === 'pending_approval').length
+)
 const warningColumns = [
   { key: 'name', label: '原料' },
   { key: 'stock', label: '当前库存' },
@@ -76,15 +85,17 @@ const orderColumns = [
 ]
 
 onMounted(async () => {
-  const [summaryRes, inventoryRes, ordersRes, suppliersRes] = await Promise.all([
+  const [summaryRes, inventoryRes, ordersRes, suppliersRes, prRes] = await Promise.all([
     inventoryApi.summary(),
     inventoryApi.list(),
     ordersApi.list(),
-    suppliersApi.list()
+    suppliersApi.list(),
+    purchaseRequestsApi.list()
   ])
   summary.value = summaryRes.data
   inventory.value = inventoryRes.data
   orders.value = ordersRes.data
   suppliers.value = suppliersRes.data
+  purchaseRequests.value = prRes.data
 })
 </script>

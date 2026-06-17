@@ -355,14 +355,18 @@ async function handleApproval() {
     return
   }
   try {
+    const targetId = approvalTarget.value.id
     if (approvalAction.value === 'approve') {
-      await purchaseRequestsApi.approve(approvalTarget.value.id, currentUser.value, approvalOpinion.value)
+      await purchaseRequestsApi.approve(targetId, currentUser.value, approvalOpinion.value)
     } else {
-      await purchaseRequestsApi.reject(approvalTarget.value.id, currentUser.value, approvalOpinion.value)
+      await purchaseRequestsApi.reject(targetId, currentUser.value, approvalOpinion.value)
     }
     closeApprovalDialog()
     await loadList()
-    selectedRequest.value = null
+    const refreshed = requests.value.find((r) => r.id === targetId)
+    if (refreshed) {
+      selectedRequest.value = refreshed
+    }
   } catch (err) {
     approvalError.value = err.response?.data?.error || '操作失败'
   }
@@ -371,6 +375,12 @@ async function handleApproval() {
 async function loadList() {
   const res = await purchaseRequestsApi.list()
   requests.value = res.data
+  if (selectedRequest.value) {
+    const refreshed = requests.value.find((r) => r.id === selectedRequest.value.id)
+    if (refreshed) {
+      selectedRequest.value = refreshed
+    }
+  }
 }
 
 onMounted(async () => {
